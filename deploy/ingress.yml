@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: application-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - http:
+      paths:
+      # The path to trigger our service
+      - path: /
+        backend:
+          # Specify the name for our app service
+          serviceName: ration
+          # And which port it is using
+          servicePort: 80

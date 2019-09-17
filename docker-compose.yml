@@ -1,0 +1,78 @@
+version: '3.4'
+
+services:
+
+  # Our app config
+  app:
+    image: ration:latest
+    # Where to find the Dockerfile
+    build: .
+    # We will override the CMD to run in development so we can have good logging.
+    command: node app.js
+    environment:
+      # Set our environment to development
+      - NODE_ENV=development
+      # Explicitly set port for app so we always know what it is
+      - PORT=1337
+
+      # It seems strange, but you refer to redis by the name of the redis container
+      - sails_session__host=redis
+      - sails_session__port=6379
+      # Use index 0 so we can isolate sockets from sessions
+      - sails_session__db=0
+      # locally we serve insecure cookies as we use http://
+      - sails_session__cookie__secure=false
+
+      # Same as above for sockets.
+      - sails_sockets__host=redis
+      - sails_sockets__port=6379
+      # Use index 0 so we can isolate sockets from sessions
+      - sails_sockets__db=1
+
+      # Same as above but for mysql. You can see values below in mysql service.
+      - sails_datastores__default__database=sails-app
+      - sails_datastores__default__user=sails-user
+      - sails_datastores__default__password=sails-password
+      - sails_datastores__default__host=mysql
+
+    ports:
+      # A mapping of ports our running container should expose for use to use outside
+      # Our Port : Container Port
+      - 1337:1337
+    volumes:
+      - ./:/opt/apps/ration
+
+  # Add a redis instance to which our app can connect. Quite simple.
+  redis:
+    image: redis:5.0.5-alpine
+
+  # Add a mysql instance as our primary data store
+  mysql:
+    image: mysql:5.7.27
+    environment:
+      # All the values here are from https://hub.docker.com/_/mysql
+      # You'll want a nice and secure password here.
+      - MYSQL_ROOT_PASSWORD=my-secret-pw
+
+      # This will create a database for our application when mysql starts up.
+      - MYSQL_DATABASE=sails-app
+
+      # Create a user specially for our application
+      - MYSQL_USER=sails-user
+
+      # Create a password specially for our application
+      - MYSQL_PASSWORD=sails-password
+
+    volumes:
+      # Here we specify that docker should keep mysql data,
+      # so the next time we start docker-compose,
+      # our data is intact.
+      - mysql-data-volume:/var/lib/mysql
+
+# Here we can configure settings for the default network
+networks:
+  default:
+
+# Here we can configure settings for the mysql data volume where our data is kept.
+volumes:
+  mysql-data-volume:

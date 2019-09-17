@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # The name of our deployment
+  name: ration-app
+  # Kubernetes matches things up by labels,
+  # So we give it a few ones to identify this deployment by
+  labels:
+    app: ration
+spec:
+  # We want 3 instances of the app running
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ration-app
+  template:
+    metadata:
+      labels:
+        app: ration-app
+    spec:
+      containers:
+      # Here is our actual definition for deployment
+      - name: ration-app
+        # Here we add the image we built earlier
+        image: chriscmsoft/sailsjs-demo
+        # We are still overriding for development,
+        # Until we have added tls
+        command: ["node", "app.js"]
+        ports:
+          # The port INSIDE the container
+        - containerPort: 1337
+          # A name for the port
+          name: app
+
+        # Environment variables, the same as for docker-compose.
+        # The only real difference is
+        # env: key
+        # and name:, value: definition.
+        # This allows us to use secrets as env variables as well.
+        env:
+          # We still define a development environment,
+          # as it's easier to get started
+        - name: NODE_ENV
+          value: development
+        - name: PORT
+          value: "1337"
+          # Remember the Kubernetes Service ?
+        - name: sails_session__host
+          value: redis
+        - name: sails_session__port
+          value: "6379"
+        # Use index 0 so we can isolate sockets from sessions
+        - name: sails_session__db
+          value: "0"
+        # locally we serve insecure cookies as we use http://
+        - name: sails_session__cookie__secure
+          value: "false"
+
+        # Same as above for sockets.
+        - name: sails_sockets__host
+          value: redis
+        - name: sails_sockets__port
+          value: "6379"
+        # Use index 1 so we can isolate sockets from sessions
+        - name: sails_sockets__db
+          value: "1"
+
+        # Mysql created by KubeDB
+        - name: sails_datastores__default__database
+          value: sails-app
+        # Here we read our database credentials
+        # From a Kubernetes secret
+        # This allows us to hide the details from other users.
+        # With Kubernetes, we can deny others access from
+        # reading the secrets.
+        - name: sails_datastores__default__user
+          valueFrom:
+            secretKeyRef:
+              # We read the username from the Kubernetes secret.
+              name: mysql-auth
+              key: username
+        - name: sails_datastores__default__password
+          valueFrom:
+            secretKeyRef:
+              # We read the username from the Kubernetes secret.
+              name: mysql-auth
+              key: password
+        - name: sails_datastores__default__host
+          value: mysql
+

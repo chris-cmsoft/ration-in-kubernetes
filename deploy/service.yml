@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # The name we will call our app by
+  name: ration
+spec:
+  selector:
+    # Kubernetes Services use labels
+    # to identify which pods belongs to it.
+    # This is why we labeled our deployment
+    # app: ration.
+    # Now this service can pick up our deployment this way.
+    app: ration-app
+  ports:
+    - protocol: TCP
+      # The port we want `ration` to be used with
+      port: 80
+      # The port inside the pod it should point at
+      targetPort: 1337

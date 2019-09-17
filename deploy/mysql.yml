@@ -1,0 +1,20 @@
+apiVersion: kubedb.com/v1alpha1
+kind: MySQL
+metadata:
+  name: mysql
+spec:
+  version: "5.7-v2"
+  # We want our data to persist
+  storageType: Durable
+  storage:
+    # Notice we are using DigitalOcean Block Storage.
+    # This will create a Volume in DigitalOcean where our data will be stored.
+    storageClassName: "do-block-storage"
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        # DigitalOcean will create a 1GB Volume for Mysql
+        storage: 1Gi
+  # This will prevent all our data being lost when we accidently delete stuff.
+  terminationPolicy: DoNotTerminate
